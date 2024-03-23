@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SubtitleOctopus - Advanced Substation Alpha Library for WebAssembly & asm.js</title>
+    <link rel="shortcut icon" href="./favicon.ico?v=wAOz4X2G7G">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.15.4/video-js.min.css">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1>Video.js Player Test with Multi-track</h1>
+        <video id="my-video" class="video-js" controls preload="auto" width="800" height="480">
+            <source src="https://animethemes.moe/video/ToaruKagakuNoRailgunS-OP1.webm" type="video/webm">
+            <track src="railgun_op.ass" kind="subtitles" srclang="en" label="English">
+            <track src="test.ass" kind="subtitles" srclang="jp" label="Test Lang">
+        </video>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.15.4/video.min.js"></script>
+    <script src="./assets/js/subtitles-octopus.js"></script>
+    <script>
+        var selectedSubtitle = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var player = videojs('my-video');
+
+            player.ready(function () {
+                var video = this;
+
+                player.on('texttrackchange', function () {
+                    var tracks = player.textTracks();
+
+                    for (var i = 0; i < tracks.length; i++) {
+                        if (tracks[i].mode === 'showing') {
+                            selectedSubtitle = tracks[i];
+                            console.log("Legenda selecionada: " + selectedSubtitle.label);
+                            
+                            // Atualizar o URL da legenda selecionada no SubtitleOctopus
+                            if (window.octopusInstance) {
+                                window.octopusInstance.setTrackByUrl(selectedSubtitle.src);
+                            }
+                            
+                            break;
+                        }
+                    }
+
+                    // Se nenhuma legenda estiver selecionada, imprime "Captions Off"
+                    if (!selectedSubtitle) {
+                        console.log("Legenda selecionada: Captions Off");
+                    }
+                });
+
+                // Renderização inicial das legendas com SubtitleOctopus
+                var options = makeOptions({
+                    video: video.el_,
+                    subUrl: '', // Vazio inicialmente, será definido pela legenda selecionada
+                    fonts: ['./fonts/CabinCondensed-Regular.ttf','./fonts/SourceSansPro-SemiBold.ttf'],
+                    debug: true,
+                    workerUrl: './assets/js/subtitles-octopus-worker.js',
+                    legacyWorkerUrl: './assets/js/subtitles-octopus-worker-legacy.js'
+                });
+
+                window.octopusInstance = new SubtitlesOctopus(options);
+            });
+        });
+
+        function makeOptions(options) {
+            var defaultOptions = {
+                video: null,
+                subUrl: '',
+                fonts: [],
+                debug: false,
+                workerUrl: '',
+                legacyWorkerUrl: '',
+            };
+
+            return Object.assign(defaultOptions, options);
+        }
+    </script>
+</body>
+
+</html>
